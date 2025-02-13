@@ -5,8 +5,9 @@ CREATE TABLE testing_table(
 );
 
 ALTER TABLE testing_table DROP COLUMN name;
-ALTER TABLE testing_table RENAME contact_name TO username;
+ALTER TABLE testing_table RENAME COLUMN contact_name TO username;
+ALTER TABLE testing_table ADD COLUMN first_name TEXT;
+ALTER TABLE testing_table ADD COLUMN last_name TEXT;
 ALTER TABLE testing_table ALTER COLUMN roll_no TYPE INT USING roll_no::INTEGER;
-SELECT *
-FROM information_schema.columns
-WHERE table_name = 'testing_table';
+
+SELECT * FROM testing_table;
