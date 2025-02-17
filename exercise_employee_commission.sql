@@ -18,6 +18,8 @@ CREATE TABLE commissions(
 	commission_amount NUMERIC
 );
 
+CREATE INDEX idx_employees_salary ON employees(salary);
+
 INSERT INTO departments(id, name) VALUES
 	(1, 'Banking'),
 	(2, 'Insurance'),
