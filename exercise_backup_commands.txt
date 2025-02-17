@@ -1,0 +1,11 @@
+Here are the commands I used to create this backup database and restore it
+
+To backup database
+
+pg_dump -U postgres -W -F  p exercise_3 > exercise_3_backup.sql
+
+To restore database
+
+psql -U ubuntu -d restored -f exercise_3_backup.sql
+
+Here, I have used psql instead of pg_restore because the type of file is a plain text file. If it would be a .dump file, I would use pg_restore in that case.
