@@ -31,11 +31,10 @@ INSERT INTO users (name, email, account_no) VALUES
 
 -- userA is depositing 1000 Rs. to his account
 BEGIN;
-	UPDATE accounts 
+	UPDATE accounts
 	SET balance = balance + 1000
-	WHERE account_no = (
-		SELECT account_no FROM users WHERE name = 'userA'
-	);
+	FROM (SELECT account_no FROM users WHERE name = 'userA' LIMIT 1) AS temp
+	WHERE accounts.account_no = temp.account_no;
 COMMIT;
 
 -- userA is withdrawing 500 Rs. from his account
@@ -44,10 +43,11 @@ DECLARE
 	BEGIN
 		UPDATE accounts 
 		SET balance = balance - 500
-		WHERE account_no = (SELECT account_no FROM users WHERE name = 'userA');
+		FROM (SELECT account_no FROM users WHERE name = 'userA' LIMIT 1) AS temp
+		WHERE accounts.account_no = temp.account_no;
 
 	EXCEPTION WHEN OTHERS THEN
-	    RAISE NOTICE 'rollback happened';
+		RAISE NOTICE 'rollback happened';
 END $$;
 
 -- userA is transferring 200 Rs to userB's account
@@ -56,14 +56,16 @@ DECLARE
 	BEGIN
 		UPDATE accounts
 		SET balance = balance - 200
-		WHERE account_no = (SELECT account_no FROM users WHERE name = 'userA');
+		FROM (SELECT account_no FROM users WHERE name = 'userA' LIMIT 1) AS temp
+		WHERE accounts.account_no = temp.account_no;
 
 		UPDATE accounts
 		SET balance = balance + 200
-		WHERE account_no = (SELECT account_no FROM users WHERE name = 'userB');
+		FROM (SELECT account_no FROM users WHERE name = 'userB' LIMIT 1) AS temp
+		WHERE accounts.account_no = temp.account_no;
 
 	EXCEPTION WHEN OTHERS THEN
-	    RAISE NOTICE 'rollback happened';
+	    	RAISE NOTICE 'rollback happened';
 END $$;
 
 SELECT * FROM accounts;
