@@ -1,63 +1,63 @@
 CREATE TYPE usertype AS ENUM('admin', 'normal');
 
 CREATE TABLE categories(
-	id INT PRIMARY KEY,
-	name TEXT NOT NULL
+	id SERIAL PRIMARY KEY,
+	name varchar(30) NOT NULL
 );
 
 CREATE TABLE users(
-	id INT PRIMARY KEY,
-	name TEXT NOT NULL,
+	id SERIAL PRIMARY KEY,
+	name varchar(30) NOT NULL,
 	type usertype DEFAULT 'normal' NOT NULL
 );
 
 CREATE TABLE articles(
-	id INT PRIMARY KEY,
-	title TEXT NOT NULL,
-	category_id INT REFERENCES categories(id),
-	author_id INT REFERENCES users(id)
+	id SERIAL PRIMARY KEY,
+	title varchar(60) NOT NULL,
+	content TEXT,
+	category_id INT NOT NULL REFERENCES categories(id),
+	author_id INT NOT NULL REFERENCES users(id)
 );
 
 CREATE TABLE comments(
 	id SERIAL PRIMARY KEY,
-	article_id INT REFERENCES articles(id),
-	user_id INT REFERENCES users(id),
+	article_id INT NOT NULL REFERENCES articles(id),
+	user_id INT NOT NULL REFERENCES users(id),
 	comment TEXT
 );
 
 -- Insert into categories
-INSERT INTO categories (id, name) VALUES 
-	(1, 'Technology'),
-	(2, 'Health'),
-	(3, 'Education'),
-	(4, 'Sports'),
-	(5, 'Science'),
-	(6, 'Entertainment');
-
+INSERT INTO categories (name) VALUES 
+	('Technology'),
+	('Health'),
+	('Education'),
+	('Sports'),
+	('Science'),
+	('Entertainment');
 
 -- Insert into users
-INSERT INTO users (id, name, type) VALUES 
-	(1, 'Alice', 'admin'),
-	(2, 'Bob', 'normal'),
-	(3, 'user3', 'admin'),
-	(4, 'David', 'admin'),
-	(5, 'Emma', 'admin'),
-	(6, 'Frank', 'normal'),
-	(7, 'Grace', 'normal'),
-	(8, 'Hannah', 'admin'),
-	(9, 'Isaac', 'normal');
+INSERT INTO users (name, type) VALUES 
+	('Alice', 'admin'),
+	('Bob', 'normal'),
+	('user3', 'admin'),
+	('David', 'admin'),
+	('Emma', 'admin'),
+	('Frank', 'normal'),
+	('Grace', 'normal'),
+	('Hannah', 'admin'),
+	('Isaac', 'normal');
 
 -- Insert into articles
-INSERT INTO articles (id, title, category_id, author_id) VALUES 
-	(1, 'AI Revolution', 1, 1),
-	(2, 'Healthy Eating', 2, 2),
-	(3, 'Learning PostgreSQL', 3, 3),
-	(4, 'The Future of Quantum Computing', 5, 4),
-	(5, 'Olympics 2024 Highlights', 4, 5),
-	(6, 'Space Exploration Updates', 5, 6),
-	(7, 'Blockchain and Its Applications', 1, 7),
-	(8, 'Movie Industry Trends in 2025', 6, 8),
-	(9, 'Nutrition for Athletes', 2, 9);
+INSERT INTO articles (title, content, category_id, author_id) VALUES  
+    ('AI Revolution', 'Exploring the impact of AI on various industries.', 1, 1),
+    ('Healthy Eating', 'A guide to maintaining a balanced and nutritious diet.', 2, 2),
+    ('Learning PostgreSQL', 'Essential tips and best practices for mastering PostgreSQL.', 3, 3),
+    ('The Future of Quantum Computing', 'Advancements and potential of quantum technology.', 5, 4),
+    ('Olympics 2024 Highlights', 'Key moments and performances from the latest Olympics.', 4, 5),
+    ('Space Exploration Updates', 'Recent discoveries and missions in space science.', 5, 6),
+    ('Blockchain and Its Applications', 'How blockchain is revolutionizing industries.', 1, 7),
+    ('Movie Industry Trends in 2025', 'Upcoming changes and innovations in filmmaking.', 6, 8),
+    ('Nutrition for Athletes', 'The best diet strategies for peak athletic performance.', 2, 9);
 
 -- Insert into comments
 INSERT INTO comments (article_id, user_id, comment) VALUES 
@@ -73,7 +73,7 @@ INSERT INTO comments (article_id, user_id, comment) VALUES
 	(1, 7, 'AI is changing the world rapidly.'),
 	(3, 8, 'PostgreSQL is powerful for databases.'),
 	(2, 9, 'Health is wealth, very informative.'),
-	(3, 1, 'PostgreSQL is very powerful.');
+	(3, 1, 'PostgreSQL is very very powerful for databases.');
 	
 
 -- Update a category name
@@ -132,12 +132,19 @@ WHERE users.name = 	'user3';
 
 -- select all the articles and also the comments associated with those articles in a single query (using nested subquery)
 SELECT title, comment
-FROM articles, (
+FROM articles a, (
 	SELECT comment, article_id FROM comments
 	) AS temp
-WHERE articles.id = temp.article_id AND author_id IN (
+WHERE a.id = temp.article_id AND author_id IN (
 	SELECT id FROM users WHERE name = 'user3'
 	);
+
+-- select all the articles and also the comments associated with those articles in a single query (using nested subquery)
+SELECT title, comment
+FROM articles a, comments
+WHERE a.id = comments.article_id AND author_id IN (
+	SELECT id FROM users WHERE name = 'user3'
+);
 
 -- select all articles which do not have any comments
 SELECT title
@@ -159,6 +166,19 @@ INNER JOIN comments ON a.id = comments.article_id
 GROUP BY a.id
 ORDER BY COUNT(*) DESC
 LIMIT 1;
+
+-- select article which has maximum comments
+SELECT title
+FROM articles a
+INNER JOIN comments ON a.id = comments.article_id
+GROUP BY a.id
+HAVING COUNT(*) = (
+	SELECT COUNT(*)
+	FROM comments
+	GROUP BY article_id
+	ORDER BY COUNT(*) DESC
+	LIMIT 1
+);
 
 -- select article which does not have more than one comment by the same user
 SELECT a.title
