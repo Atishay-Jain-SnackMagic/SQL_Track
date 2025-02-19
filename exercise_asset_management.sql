@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS asset_alLocations, common_assets, repairs, employees, categories, assets;
+-- DROP TABLE IF EXISTS asset_alLocations, common_assets, repairs, employees, categories, assets;
 
 CREATE TABLE employees (
     id SERIAL PRIMARY KEY,
