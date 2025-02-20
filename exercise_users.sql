@@ -1,3 +1,4 @@
+-- DROP TABLE IF EXISTS users, friends, images, tags;
 CREATE TABLE users(
 	id INT PRIMARY KEY,
 	name TEXT
@@ -42,7 +43,7 @@ INSERT INTO images(id, image_user) VALUES
 	(3, 3),
 	(4, 4),
 	(5, 5),
-	(6, 2);
+	(6, 5);
 
 INSERT INTO tags(image_id, tagged) VALUES
 	(1, 2),
@@ -52,6 +53,7 @@ INSERT INTO tags(image_id, tagged) VALUES
 	(4, 2),
 	(5, 1),
 	(2, 1),
+	(3, 1),
 	(6, 1);
 
 CREATE INDEX idx_users_name ON users(name);
@@ -64,8 +66,23 @@ CREATE INDEX idx_tags_image_id ON tags(image_id);
 SELECT image_id
 FROM tags
 GROUP BY image_id
-ORDER BY COUNT(*) DESC
-LIMIT 1;
+HAVING COUNT(*) = (
+	SELECT COUNT(*)
+	FROM tags
+	GROUP BY image_id
+	ORDER BY COUNT(*) DESC
+	LIMIT 1
+);
+
+-- Find image that has been tagged most no of times. (2ND APPROACH)
+SELECT image_id
+FROM (
+	SELECT image_id, RANK() OVER (ORDER BY COUNT(*) DESC) as rnk
+	FROM tags
+	GROUP BY image_id
+)
+WHERE rnk = 1;
+
 
 -- Find all images belonging to the friends of a particular user
 SELECT i.id
@@ -113,11 +130,16 @@ WHERE user_id = (
 
 -- Find friend of a particular user (Say, userA) who have tagged him most no. of times.
 SELECT friend
-FROM friends f
-INNER JOIN users u ON u.id = f.user_id
-INNER JOIN images i ON f.friend = i.image_user
-INNER JOIN tags t ON t.image_id = i.id and tagged = 1
-WHERE u.name = 'userA'
-GROUP BY f.friend
-ORDER BY COUNT(*) DESC
-LIMIT 1;
+FROM 
+(
+    SELECT f.friend,
+           RANK() OVER (ORDER BY COUNT(*) DESC) AS rnk,
+           COUNT(*) AS cnt
+    FROM friends f
+    INNER JOIN users u ON u.id = f.user_id
+    INNER JOIN images i ON f.friend = i.image_user
+    INNER JOIN tags t ON t.image_id = i.id AND t.tagged = u.id
+    WHERE u.name = 'userA'
+    GROUP BY f.friend
+) AS ranked_friends
+WHERE rnk = 1;
