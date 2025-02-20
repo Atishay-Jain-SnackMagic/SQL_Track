@@ -143,8 +143,8 @@ INSERT INTO asset_allocations (asset_id, employee_id, start_date, end_date) VALU
     (1, 1, '2011-01-01', '2011-12-31'),
     (1, 2, '2012-01-01', NULL),
     (2, 2, '2011-01-01', '2011-12-31'),
-    (5, 1, '2011-04-01', NULL),
-    (6, 2, '2011-01-01', NULL);
+    (5, 1, '2011-04-01', NULL);
+    -- (6, 2, '2011-01-01', NULL);
 
 -- Insert Common Assets
 INSERT INTO common_assets (asset_id, location) VALUES
@@ -152,13 +152,29 @@ INSERT INTO common_assets (asset_id, location) VALUES
     (8, 'Meeting Room');
 
 
--- Find the name of the employee who has been alloted the maximum number of assets till date
+-- Find the name of the employee who has been alloted the maximum number of assets till date (using subquery)
 SELECT e.*
 FROM employees e
 INNER JOIN asset_allocations a ON e.id = a.employee_id
 GROUP BY e.id
-ORDER BY count(*) DESC
-LIMIT 1;
+HAVING COUNT(*) = (
+	SELECT COUNT(*)
+	FROM asset_allocations
+	GROUP BY employee_id
+	ORDER BY COUNT(*) DESC
+	LIMIT 1
+);
+
+-- Find the name of the employee who has been alloted the maximum number of assets till date (using rank)
+SELECT e.*
+FROM employees e
+INNER JOIN (
+	SELECT employee_id,
+	RANK() OVER (ORDER BY COUNT(*) DESC) as rnk
+	FROM asset_allocations
+	GROUP BY employee_id) AS a ON e.id = a.employee_id
+WHERE rnk = 1;
+
 
 -- Identify the name of the employee who currently has the maximum number of assets as of today
 SELECT e.*
@@ -166,8 +182,25 @@ FROM employees e
 INNER JOIN asset_allocations a ON e.id = a.employee_id
 WHERE a.end_date IS NULL
 GROUP BY e.id
-ORDER BY count(*) DESC
-LIMIT 1;
+HAVING COUNT(*) = (
+	SELECT COUNT(*)
+	FROM asset_allocations
+	WHERE end_date IS NULL
+	GROUP BY employee_id
+	ORDER BY COUNT(*) DESC
+	LIMIT 1
+);
+
+-- Identify the name of the employee who currently has the maximum number of assets as of today
+SELECT e.*
+FROM employees e
+INNER JOIN (
+	SELECT employee_id,
+	RANK() OVER (ORDER BY COUNT(*) DESC) as rnk
+	FROM asset_allocations
+	WHERE end_date IS NULL
+	GROUP BY employee_id) AS a ON e.id = a.employee_id
+WHERE rnk = 1;
 
 -- -- Find name and period of all the employees who have used a Laptop - let’s say laptop A - since it was bought by the company.
 SELECT e.name, SUM(CASE 
