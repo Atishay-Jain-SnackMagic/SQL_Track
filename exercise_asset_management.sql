@@ -55,7 +55,7 @@ BEGIN
     WHERE name IN ('Laptop', 'iPhone', 'Printer', 'Projector');
 
     IF NEW.warranty_end IS NULL AND NEW.category_id = ANY(category_ids) THEN
-        NEW.warranty_end := NEW.year + INTERVAL '1 year';
+        NEW.warranty_end := NEW.purchase_date + INTERVAL '1 year';
     END IF;
 
     RETURN NEW;
@@ -120,7 +120,7 @@ EXECUTE FUNCTION validate_common_asset();
 
 
 INSERT INTO categories(name) VALUES
-	('Laptop'), ('iPhone'), ('Printer'), ('Projector');
+	('Laptop'), ('iPhone'), ('Printer'), ('Projector'), ('Modem');
 
 -- Insert Employees
 INSERT INTO employees (name) VALUES
@@ -142,9 +142,9 @@ INSERT INTO assets (name, category_id, purchase_date, model, price, warranty_end
 INSERT INTO asset_allocations (asset_id, employee_id, start_date, end_date) VALUES
     (1, 1, '2011-01-01', '2011-12-31'),
     (1, 2, '2012-01-01', NULL),
-    (2, 2, '2011-01-01', '2011-12-31'),
-    (5, 1, '2011-04-01', NULL);
-    -- (6, 2, '2011-01-01', NULL);
+    (3, 2, '2011-01-01', '2011-12-31'),
+    (5, 1, '2011-04-01', NULL),
+    (6, 2, '2011-01-01', NULL);
 
 -- Insert Common Assets
 INSERT INTO common_assets (asset_id, location) VALUES
@@ -255,8 +255,8 @@ WHERE CURRENT_DATE > warranty_end;
 -- Return a list of Employee Names who do not have any asset assigned to them.
 SELECT e.name
 FROM employees e
-LEFT JOIN asset_allocations alloc ON alloc.employee_id = e.id
-WHERE end_date IS NULL AND alloc.id IS NULL;
+LEFT JOIN (SELECT employee_id FROM asset_allocations WHERE end_date IS NULL) AS alloc ON alloc.employee_id = e.id
+WHERE alloc.employee_id IS NULL;
 
 -- Return a list of Employee Names who do not have any asset assigned to them (using subquery).
 SELECT name
