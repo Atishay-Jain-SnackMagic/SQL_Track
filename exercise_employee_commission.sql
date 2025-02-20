@@ -2,7 +2,7 @@
 
 CREATE TABLE departments(
 	id SERIAL PRIMARY KEY,
-	name TEXT
+	name VARCHAR(30) UNIQUE
 );
 
 CREATE TABLE employees(
